@@ -529,9 +529,9 @@ module Make
         | I_LDOPBH (op,v,rmw,rs,rt,rn) ->
             ldop op (bh_to_sz v) rmw rs rt rn ii >>! B.Next
 (*  Cannot handle *)
-        | (I_RBIT _|I_MRS _|I_LDP _|I_STP _|I_IC _|I_DC _|I_BL _|I_BLR _|I_BR _|I_RET _) as i ->
-            Warn.fatal "illegal instruction: %s"
-              (AArch64.dump_instruction i)
-       )
-    end
+      | (I_RBIT _|I_MRS _|I_LDP _|I_STP _|I_IC _|I_DC _|I_TLBI _|I_BL _|I_BLR _|I_BR _|I_RET _) as i ->
+          Warn.fatal "illegal instruction: %s"
+            (AArch64.dump_instruction i)
+     )
   end
+end
