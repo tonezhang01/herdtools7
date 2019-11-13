@@ -55,6 +55,8 @@ type op1 =
   | TagLoc       (* Get tag memory location from location *)
   | TagExtract   (* Extract tag from tagged location *)
   | LocExtract   (* Extract actual location from location *)
+  | TLBLoc (* get TLB entry from location *)
+  | PTELoc (* get PTE entry from location *)
 
 val pp_op1 : bool -> op1 -> string
 

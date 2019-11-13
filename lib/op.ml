@@ -72,6 +72,8 @@ type op1 =
   | TagLoc       (* Get tag memory location from location *)
   | TagExtract   (* Extract tag from tagged location *)
   | LocExtract   (* Extract actual location from location *)
+  | TLBLoc (* get TLB entry from location *)
+  | PTELoc (* get PTE entry from location *)
 
 let pp_op1 hexa o = match o with
 | Not -> "!"
@@ -86,6 +88,9 @@ let pp_op1 hexa o = match o with
 | TagLoc ->  "tagloc"
 | TagExtract -> "tagextract"
 | LocExtract -> "locextract"
+| TLBLoc -> "TLBloc"
+| PTELoc -> "PTEloc"
+
 (***********)
 
 type op3 = If
