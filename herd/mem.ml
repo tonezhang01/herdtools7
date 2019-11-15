@@ -132,6 +132,7 @@ module Make(C:Config) (S:Sem.Semantics) : S with module S = S	=
 
     let mixed = C.variant Variant.Mixed
     let memtag = C.variant Variant.MemTag
+    let kvm = C.variant Variant.Kvm
 
 (*****************************)
 (* Event structure generator *)
@@ -930,7 +931,7 @@ let solve_regs test es csn =
           | _,_ -> k)
           rfm test.Test_herd.init_state in
       st,
-      if memtag then
+      if memtag || kvm then
         E.EventSet.fold
           (fun e k -> match E.to_fault e with
           | Some f -> A.FaultSet.add f k

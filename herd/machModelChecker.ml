@@ -238,7 +238,9 @@ module Make
              (List.map
                 (fun (k,p) -> k,lazy (E.EventSet.filter p evts))
                 ["C", E.is_commit;
-                 "F", E.is_barrier; ])) in
+                 "F", E.is_barrier;
+                 "FAULT", E.is_fault;
+                 "INV",E.is_inv;])) in
       let m =
         I.add_sets m
           (List.map

@@ -69,6 +69,8 @@ module type S = sig
 (* includes additional memory events,  eg lock, unlocks... *)
   val is_additional_mem : event -> bool
   val is_atomic : event -> bool
+  val is_inv : event -> bool
+  val is_fault : event -> bool
   val to_fault : event -> A.fault option
   val is_amo : event -> bool
   val get_mem_dir : event -> Dir.dirn
@@ -461,6 +463,8 @@ struct
     let is_amo e = match e.iiid with
     | Some {A.inst=i; _} when A.is_amo i -> Act.is_mem_store e.action
     | _ -> false
+    let is_inv e = Act.is_inv e.action
+    let is_fault e = Act.is_fault e.action
     let get_mem_dir e = Act.get_mem_dir e.action
     let get_mem_size e = Act.get_mem_size e.action
 
