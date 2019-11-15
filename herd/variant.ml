@@ -34,7 +34,8 @@ type t =
   | TagCheckPrecise
   | TagCheckUnprecise
   | TooFar
-
+  | Kvm
+  
 let tags =
   ["success";"instr";"specialx0";"normw";"acqrelasfence";"backcompat";
    "fullscdepend";"splittedrmw";"switchdepscwrite";"lrscdiffok";
@@ -58,6 +59,7 @@ let parse s = match Misc.lowercase s with
 | "tagcheckprecise"|"precise" -> Some TagCheckPrecise
 | "tagcheckunprecise"|"unprecise" -> Some TagCheckUnprecise
 | "toofar" -> Some TooFar
+| "kvm" -> Some Kvm
 | _ -> None
 
 let pp = function
@@ -77,6 +79,7 @@ let pp = function
   | TagCheckPrecise -> "TagCheckPrecise"
   | TagCheckUnprecise -> "TagCheckUnprecise"
   | TooFar -> "TooFar"
+  | Kvm -> "kvm" 
 
 let compare = compare
 
