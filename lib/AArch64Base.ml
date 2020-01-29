@@ -19,6 +19,7 @@ open Printf
 
 let arch = Archs.aarch64
 let endian = Endian.Little
+let base_type = CType.Base "int"
 
 (*************)
 (* Registers *)
@@ -37,6 +38,7 @@ type gpr =
 type reg =
   | ZR
   | Ireg of gpr
+  | Tag of gpr
   | Symbolic_reg of string
   | Internal of int
   | NZP
@@ -127,6 +129,7 @@ let symb_reg_name = function
   | _ -> None
 
 let symb_reg r =  Symbolic_reg r
+let typeof _ = assert false
 
 (************)
 (* Barriers *)
@@ -710,7 +713,7 @@ let fold_regs (f_regs,f_sregs) =
   let fold_reg reg (y_reg,y_sreg) = match reg with
   | Ireg _ -> f_regs reg y_reg,y_sreg
   | Symbolic_reg reg ->  y_reg,f_sregs reg y_sreg
-  | Internal _ | NZP | ZR | ResAddr -> y_reg,y_sreg in
+  | Internal _ | NZP | ZR | ResAddr | Tag _ -> y_reg,y_sreg in
 
   let fold_kr kr y = match kr with
   | K _ -> y
@@ -753,7 +756,7 @@ let map_regs f_reg f_symb =
   let map_reg reg = match reg with
   | Ireg _ -> f_reg reg
   | Symbolic_reg reg -> f_symb reg
-  | Internal _ | ZR | NZP | ResAddr -> reg in
+  | Internal _ | ZR | NZP | ResAddr | Tag _-> reg in
 
   let map_kr kr = match kr with
   | K _ -> kr

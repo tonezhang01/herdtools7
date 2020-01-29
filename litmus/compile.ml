@@ -41,8 +41,8 @@ module Generic (A : Arch_litmus.Base)
 
       open CType
 
-      let base =  base
-      let pointer = pointer
+      let base =  A.base_type
+      let pointer = CType.Pointer base
       let code_pointer = Pointer (Base "ins_t")
       let tag = Base "tag_t"
 
@@ -81,8 +81,8 @@ module Generic (A : Arch_litmus.Base)
                match a with
                | LV (A.Location_reg (q,r),v) when p=q && A.reg_compare reg r = 0 ->
                    begin match typeof v,t with
-                   | (Base _ as t, Some (Base _)) ->
-                       Some t (* location takes precedence *)
+                   | (Base _, Some (Base _)) ->
+                   t (* location takes precedence *)
                    | (Pointer (Base s1), Some (Pointer (Base s2)))
                      when Misc.string_eq s1 s2 ->
                        t
@@ -140,7 +140,8 @@ module Generic (A : Arch_litmus.Base)
           A.LocMap.add loc (typeof v) env
         | LL _|FF _ -> env
 
-      let type_final final env = ConstrGen.fold_constr type_atom final env
+      let type_final final env =
+        ConstrGen.fold_constr type_atom final env
 
       let type_prop prop env = ConstrGen.fold_prop type_atom prop env
 
@@ -161,7 +162,9 @@ module Generic (A : Arch_litmus.Base)
                 ignore (A.LocMap.find loc env) ;
                 env
               with Not_found ->
-                A.LocMap.add loc (typeof v) env
+                type_atom (ConstrGen.LV (loc, v)) env
+                  (*
+                A.LocMap.add loc (typeof v) env*)
               end
           | _ -> A.LocMap.add loc (misc_to_c t) env)
           env init
@@ -321,13 +324,13 @@ type P.code = MiscParser.proc * A.pseudo list)
 (* Count specific instructions *)
 (*******************************)
 
-let count_ins p code =
-  List.fold_left
-    (A.pseudo_fold (fun k i  -> if p i then k+1 else k))
-    0 code
+    let count_ins p code =
+      List.fold_left
+        (A.pseudo_fold (fun k i  -> if p i then k+1 else k))
+        0 code
 
-let count_ret =
-  if do_self then fun code -> count_ins C.is_ret code else fun _ -> 0
+    let count_ret =
+      if do_self then fun code -> count_ins C.is_ret code else fun _ -> 0
 
 
 (****************)
@@ -466,7 +469,7 @@ let count_ret =
     let comp_initset proc initenv code inputs_final =
       let reg_set  = comp_fix code inputs_final in
       let reg_set =
-        if do_self then
+        if do_self || A.arch = `X86_64 then (* Bypass livein analysis for X64 arch *)
           RegSet.union
             reg_set
             (RegSet.of_list

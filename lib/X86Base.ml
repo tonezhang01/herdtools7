@@ -22,6 +22,7 @@ open Printf
 (* Who am I ? *)
 let arch = Archs.x86
 let endian = Endian.Little
+let base_type = CType.Base "int"
 
 (*************)
 (* Registers *)
@@ -74,6 +75,7 @@ let symb_reg_name = function
   | _ -> None
 
 let symb_reg r = Symbolic_reg r
+let typeof _ = assert false
 
 (************)
 (* Barriers *)

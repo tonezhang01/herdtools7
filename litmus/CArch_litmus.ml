@@ -17,8 +17,14 @@
 module Make(O:sig val memory : Memory.t val hexa : bool end) = struct
   module V = Int32Constant
 
-  type reg = string
-  type instruction = unit
+  module type SmallBase = sig
+    val base_type : CType.t
+
+    type reg = string
+    type instruction
+  end
+
+  include (CBase : SmallBase)
 
   module RegSet = StringSet
   module RegMap = StringMap
@@ -73,4 +79,5 @@ module Make(O:sig val memory : Memory.t val hexa : bool end) = struct
     | CAst.Global _::xs -> count_procs xs
     | [] -> 0
 
+  let typeof _ = assert false
 end

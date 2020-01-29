@@ -20,6 +20,8 @@ open Printf
 
 let arch = Archs.mips
 let endian = Endian.Big
+let base_type = CType.Base "int"
+
 (*************)
 (* Registers *)
 (*************)
@@ -139,6 +141,7 @@ let symb_reg_name = function
   | _ -> None
 
 let symb_reg r = Symbolic_reg r
+let typeof _ = assert false
 
 (************)
 (* Barriers *)

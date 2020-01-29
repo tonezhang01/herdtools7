@@ -19,6 +19,7 @@ let string_of_annot = MemOrderOrAnnot.pp_annot
 
 let arch = Archs.c
 let endian = Endian.Little
+let base_type = CType.Base "int"
 
 type reg = string
 
@@ -34,6 +35,11 @@ let symb_reg_name r =
   | _ -> None
 
 let symb_reg r = sprintf "%%%s" r
+type 's t_reg =
+  | T of 's Constant.t
+  | Reg of reg
+let typeof _ = assert false
+
 (*
 let loc_compare l1 l2 = match l1,l2 with
   | Reg s1,Reg s2 -> reg_compare s1 s2

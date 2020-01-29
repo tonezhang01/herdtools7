@@ -23,6 +23,7 @@ let string_of_labels a = Label.Set.pp_str "," Misc.identity a
 (* Who am i ? *)
 let arch = Archs.lisa
 let endian = Endian.Little
+let base_type = CType.Base "int"
 
 type gpr_reg = int
 
@@ -52,6 +53,7 @@ let parse_reg s =
         Some (GPRreg (int_of_string rem))
       with _ -> None end
   | _ -> None
+let typeof _ = assert false
 
 (****************)
 (* Barriers     *)

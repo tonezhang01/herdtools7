@@ -30,8 +30,9 @@ module type S =
   end
 
 
-module FromPPC   : functor(B:PPCBarrier.S)   -> S with type a = B.a
-module FromARM   : functor(B:ARMBarrier.S)   -> S with type a = B.a
-module FromX86   : functor(B:X86Barrier.S)   -> S with type a = B.a
+module FromPPC    : functor(B:PPCBarrier.S)    -> S with type a = B.a
+module FromARM    : functor(B:ARMBarrier.S)    -> S with type a = B.a
+module FromX86    : functor(B:X86Barrier.S)    -> S with type a = B.a
+module FromX86_64 : functor(B:X86_64Barrier.S) -> S with type a = B.a
 module FromMIPS   : functor(B:MIPSBarrier.S)   -> S with type a = B.a
-module FromBell : functor(B:BellBarrier.S) -> S with type a = B.a
+module FromBell   : functor(B:BellBarrier.S)   -> S with type a = B.a
