@@ -240,7 +240,11 @@ module Make
                 ["C", E.is_commit;
                  "F", E.is_barrier;
                  "FAULT", E.is_fault;
-                 "INV",E.is_inv;])) in
+                 "INV",E.is_inv;
+                 "EL0",E.is_at_EL0;
+                 "EL1",E.is_at_EL1;
+                 "EL2",E.is_at_EL2;
+                 "EL3",E.is_at_EL3;])) in
       let m =
         I.add_sets m
           (List.map
