@@ -531,7 +531,7 @@ module Make
       let mk_get_param_pos _env test = match test.T.globals with
       | [] -> fun _ -> assert false
       | (_,t0)::xs ->
-          let sum,m =
+          let _sum,m =
             List.fold_left
               (fun (i,m) (a,t) ->
                 let sz = SkelUtil.nitems t in
