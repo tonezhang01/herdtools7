@@ -125,8 +125,6 @@ module Make
         match Cfg.preload with StaticNPL _ -> true
         | CustomPL|NoPL|RandomPL|StaticPL -> false
 
-      let ws = Cfg.word
-
       open Barrier
       let barrier =  Cfg.barrier
       let do_timebase = match barrier with
@@ -276,7 +274,6 @@ module Make
         ObjUtil.Insert
           (struct
             let sysarch = Cfg.sysarch
-            let word = ws
           end)
 
 (* Location utilities *)
