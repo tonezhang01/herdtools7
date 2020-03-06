@@ -249,7 +249,7 @@ module type S = sig
   val location_compare : event -> event -> int
   val same_location : event -> event -> bool
   val same_value : event -> event -> bool
-  val is_visible_location : A.location -> bool
+(*  val is_visible_location : A.location -> bool *)
 
 
 (************************)
@@ -403,10 +403,11 @@ struct
     | _,_ -> assert false
 
 (* Visible locations *)
+(*
     let is_visible_location  = function
       | A.Location_global _|A.Location_deref _ -> true
       | A.Location_reg _ -> false
-
+*)
     let same_location e1 e2 =
       if (location_of e1 = None || location_of e2 = None) then
         false
