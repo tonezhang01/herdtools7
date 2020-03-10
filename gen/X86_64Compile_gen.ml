@@ -117,6 +117,10 @@ module Make(Cfg:CompileCommon.Config) : XXXCompile_gen.S =
                 Effaddr_rm64 rB,
                 Operand_effaddr (Effaddr_rm64 (Rm64_reg rC)))
 
+    let emit_store_nti_ins_reg sz o rB rC =
+      I_MOVNTI (sz,Effaddr_rm64 (Rm64_deref (rB,o)),rC)
+
+
     let emit_store_mixed sz o st p init addr v =
       let isz = size_to_inst_size sz in
       let rB,init,st =
@@ -136,6 +140,30 @@ module Make(Cfg:CompileCommon.Config) : XXXCompile_gen.S =
 
     let emit_store st p init addr v =
       emit_store_mixed mach_size 0 st p init addr v
+
+    let emit_store_nti_mixed  sz o st p init addr v =
+      let rA,init,st = U.next_init st p init addr in
+      let rA = change_size_reg rA R64b in
+      let rV,init,cv,st = U.emit_mov st p init v in
+      let rV = change_size_reg rV (size_to_reg_size sz) in
+      init,cv@pseudo [emit_store_nti_ins_reg (size_to_inst_size sz) o rA rV],st
+
+
+    let emit_store_nti st p init addr v = emit_store_nti_mixed  mach_size 0 st p init addr v
+
+    let emit_movntdqa_ins xmm rA =
+      I_MOVNTDQA (xmm,Effaddr_rm64 (Rm64_deref (rA,0)))
+
+    let emit_movd_ins sz r xmm = I_MOVD (sz,r,xmm)
+
+    let emit_load_nti sz st p init addr =
+      let rA,init,st = U.next_init st p init addr in
+      let r64,st = next_reg st in
+      let r = change_size_reg r64 (size_to_reg_size sz) in
+      let xmm,st = alloc_special st in
+      let c = [emit_movntdqa_ins xmm rA;emit_movd_ins (size_to_inst_size sz) r xmm] in
+      r64,init,pseudo c,st
+
 
     let emit_sta sz addr r v =
       let rsz = size_to_reg_size sz
@@ -167,7 +195,8 @@ module Make(Cfg:CompileCommon.Config) : XXXCompile_gen.S =
             I_EFF_OP
               (I_MOV, isz, Effaddr_rm64 (Rm64_reg r),
                Operand_effaddr (Effaddr_rm64 (Rm64_reg rc))) in
-    let init,iexch,st =
+
+      let init,iexch,st =
         match o with
         | 0 ->
             let iexch =
@@ -281,15 +310,30 @@ module Make(Cfg:CompileCommon.Config) : XXXCompile_gen.S =
                | Some (Plain,Some (sz, o)) ->
                   let r,init,cs,st = emit_load_mixed sz o st _p init loc  in
                   Some r,init,cs,st
+               | Some (NonTemporal,None) ->
+                   let r,init,cs,st = emit_load_nti mach_size st _p init loc  in
+                   Some r,init,cs,st
+               | Some (NonTemporal,Some (sz,0)) ->
+                   let r,init,cs,st = emit_load_nti sz st _p init loc  in
+                   Some r,init,cs,st
+               | Some (NonTemporal,Some _) ->
+                   Warn.fatal "Illegal non-temporal load"
                end
             | W ->
                begin match e.C.atom with
                | None|Some (Plain,None) ->
                   let init,cs,st = emit_store st _p init loc e.C.v in
                   None,init,cs,st
+               | Some (NonTemporal,None) ->
+                   let init,cs,st = emit_store_nti st _p init loc e.C.v in
+                   None,init,cs,st
                | Some (Atomic,None) ->
                    let rX,st = next_reg st in
                    Some rX,init,pseudo (emit_sta mach_size loc rX e.C.v), st
+               | Some (NonTemporal,Some (sz,o)) ->
+                   let init,cs,st =
+                     emit_store_nti_mixed sz o st _p init loc e.C.v in
+                   None,init,cs,st
                | Some (Atomic,Some (sz,o)) ->
                    let r,init,cs,st =
                      emit_sta_mixed sz o st _p init loc e.C.v in
@@ -321,12 +365,11 @@ module Make(Cfg:CompileCommon.Config) : XXXCompile_gen.S =
 
     let emit_rmw_dep () =  emit_exch_dep
 
-    let emit_fence _ _ _ = function
-      | MFence -> [X86_64.Instruction I_MFENCE]
+    let emit_fence _ _ _ f = [X86_64.Instruction (I_FENCE f)]
 
     let full_emit_fence = GenUtils.to_full emit_fence
 
-    let stronger_fence = MFence
+    let stronger_fence = MFENCE
 
     (* Check load *)
     let do_check_load p st r e =
@@ -369,4 +412,22 @@ module Make(Cfg:CompileCommon.Config) : XXXCompile_gen.S =
 
     let get_xstore_results _ = []
 
+(* Info computation, compute extra alignement constraints *)
+    let add_info n k =
+      let e = n.C.evt in
+      match e.C.loc,e.C.dir,e.C.atom with
+      | Data x,Some R,Some (NonTemporal,_) ->
+          let v =
+            try
+              let old = StringMap.find x k in
+              max 16 old
+            with Not_found -> 16 in
+          StringMap.add x v k
+      | _,_,_ -> k
+
+    let get_archinfo n =
+      let i = C.fold add_info n StringMap.empty in
+      let i =
+        StringMap.fold (fun x a k -> Printf.sprintf "%s:%i" x a::k) i [] in
+      ["Align",String.concat "," i;]
   end

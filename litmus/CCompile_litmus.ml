@@ -187,7 +187,7 @@ module Make
         flocs = List.map fst locs;
         global_code = get_global_code code;
         src = t;
-        type_env = env ;
+        type_env = env,StringMap.empty;
       }
 
   end

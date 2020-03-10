@@ -151,8 +151,8 @@ module RegMap = A.RegMap)
           RegSet.diff
             (RegSet.diff all stable)
             (RegSet.unions [in_outputs;init_set]) in
-        let rem =
-          if AL.arch = `X86_64 then
+        let rem = (* ??? *)
+          if false && AL.arch = `X86_64 then
             RegSet.unions [rem;(RegSet.diff all init_set)]
           else rem in
         let rem =
@@ -486,17 +486,29 @@ module RegMap = A.RegMap)
           (fmt_code p) (fmt_code_size p)
           (fmt_prelude p) (fmt_lbl_offset p lbl))
 
-      let compile_addr_call x = sprintf "&_a->%s[_i]" x
+      let indirect_star =
+        let open Memory in
+        match O.memory with
+        | Direct -> ""
+        | Indirect -> "*"
+
+      let compile_addr_call env x =
+        let pp = sprintf "&_a->%s[_i]" x in
+        try
+          let t = List.assoc x env in
+          sprintf "(%s %s*)%s" (CType.dump t) indirect_star pp
+        with Not_found  -> pp
+
       let compile_cpy_addr_call proc x =
         sprintf "&_a->%s[_i]" (Tmpl.addr_cpy_name x proc)
       let compile_out_reg_call proc reg =
         sprintf "&%s" (Tmpl.compile_out_reg proc reg)
 
-      let dump_call f_id _tr_idx chan indent _env _globEnv _volatileEnv proc t =
+      let dump_call f_id _tr_idx chan indent _env alignedEnv _volatileEnv proc t =
         let labels = List.map compile_label_call (Tmpl.get_labels t) in
         let addrs_proc,_ = Tmpl.get_addrs t in
-        let addrs = List.map compile_addr_call addrs_proc
-        and addrs_cpy =
+        let addrs = List.map (compile_addr_call alignedEnv) addrs_proc in
+        let addrs_cpy =
           if O.memory = Memory.Indirect && O.cautious then
             List.map (compile_cpy_addr_call proc) addrs_proc
           else []

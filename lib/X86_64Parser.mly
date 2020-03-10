@@ -20,6 +20,7 @@ module X86_64 = X86_64Base
 
 %token EOF
 %token <X86_64Base.reg> ARCH_REG
+%token <X86_64Base.xmm> XMM
 %token <string> SYMB_REG
 %token <string> NUM
 %token <string> INTEL_NUM
@@ -41,9 +42,12 @@ module X86_64 = X86_64Base
 %token I_UXCH I_UXCHB I_UXCHW I_UXCHL I_UXCHQ
 %token I_CMPXCHG I_CMPXCHGB I_CMPXCHGW I_CMPXCHGL I_CMPXCHGQ
 %token I_CMOVC I_CMOVCB I_CMOVCW I_CMOVCL I_CMOVCQ
-%token  I_LOCK  I_JMP  I_MFENCE I_SETNB
-%token  I_JE I_JNE I_JLE I_JLT I_JGT I_JGE I_JS I_JNS
-
+%token I_LOCK  I_JMP I_SETNB
+%token I_MFENCE I_SFENCE I_LFENCE
+%token I_JE I_JNE I_JLE I_JLT I_JGT I_JGE I_JS I_JNS
+%token I_MOVNTI  I_MOVNTIL I_MOVNTIQ
+%token I_MOVD I_MOVNTDQA
+  
 %type <MiscParser.proc list * (X86_64Base.pseudo) list list> main
 %start  main
 
@@ -127,7 +131,18 @@ instr:
     {X86_64.I_EFF_OP (X86_64.I_MOV, X86_64.I32b, $4,$2)}
   | I_MOVQ   operand  COMMA  effaddr
     {X86_64.I_EFF_OP (X86_64.I_MOV, X86_64.I64b, $4,$2)}
-
+  | I_MOVQ XMM COMMA reg
+    { X86_64.I_MOVD ( X86_64.I64b,$4,$2) }  
+  | I_MOVD XMM COMMA reg
+    { X86_64.I_MOVD ( X86_64.I32b,$4,$2) }  
+  | I_MOVNTI reg COMMA effaddr
+      {X86_64.I_MOVNTI (X86_64.INSb,$4,$2)}
+  | I_MOVNTIL reg COMMA effaddr
+      {X86_64.I_MOVNTI (X86_64.I32b,$4,$2)}
+  | I_MOVNTIQ reg COMMA effaddr
+      {X86_64.I_MOVNTI (X86_64.I64b,$4,$2)}
+  | I_MOVNTDQA effaddr COMMA XMM
+      {X86_64.I_MOVNTDQA ($4,$2) }
   | I_CMP  operand  COMMA  effaddr
     {X86_64.I_EFF_OP (X86_64.I_CMP, X86_64.INSb, $4,$2)}
   | I_CMPB  operand  COMMA  effaddr
@@ -160,7 +175,11 @@ instr:
     {X86_64.I_JCC(X86_64.C_NS, $2)}
 
   | I_MFENCE
-      { X86_64.I_MFENCE}
+      { X86_64.I_FENCE (X86_64.MFENCE) }
+  | I_SFENCE
+      { X86_64.I_FENCE (X86_64.SFENCE) }
+  | I_LFENCE
+      { X86_64.I_FENCE (X86_64.LFENCE) }
 
   | I_DEC  effaddr
     {X86_64.I_EFF (X86_64.I_DEC, X86_64.INSb, $2)}

@@ -47,3 +47,5 @@ val strip_attributes : t -> t
 val is_ptr_to_atomic : t -> bool
 (* Identical base types, is signed vs. unsigned *)
 val same_base : t -> t -> bool
+
+val type_for_align : int -> t

@@ -135,3 +135,5 @@ let same_base t0 t1 = match t0,t1 with
     | _,_ -> false
     end
 | _,_ -> false
+
+let type_for_align i = Array ("uint8_t",i)
