@@ -22,8 +22,9 @@ module Make (C:Arch_herd.Config)(V:Value.S) =
     let is_amo = function
       | I_LOCK _ | I_EFF_EFF (I_XCHG,_,_,_) -> true
       | I_NOP | I_EFF_OP _ | I_EFF _ | I_EFF_EFF _
-        | I_CMPXCHG _ | I_JMP _ | I_JCC _ | I_CMOVC _
-        | I_MFENCE -> false
+      | I_CMPXCHG _ | I_JMP _ | I_JCC _ | I_CMOVC _ | I_MOVNTI _
+      | I_FENCE _ | I_MOVD _ | I_MOVNTDQA _
+        -> false
 
     let pp_barrier_short = pp_barrier
     let reject_mixed = false
@@ -36,7 +37,9 @@ module Make (C:Arch_herd.Config)(V:Value.S) =
 
     let barrier_sets =
       [
-        "MFENCE",is_barrier Mfence;
+        "MFENCE",is_barrier MFENCE;
+        "SFENCE",is_barrier SFENCE;
+        "LFENCE",is_barrier LFENCE;
       ]
 
     let annot_sets = ["X",is_atomic]
@@ -53,10 +56,25 @@ module Make (C:Arch_herd.Config)(V:Value.S) =
       | I32b | INSb -> MachSize.Word
       | I64b -> MachSize.Quad
 
+    let reg_part_to_mach_size = function
+      | R8bL | R8bH ->  MachSize.Byte
+      | R16b -> MachSize.Short
+      | R32b -> MachSize.Word
+      | R64b -> MachSize.Quad
+
+    let reg_to_mach_size r = match r with
+      | Ireg (_,p) -> reg_part_to_mach_size p
+      | RIP | Symbolic_reg _ | Internal _ | Flag _ | XMM _ -> Warn.fatal "No size for register %s" (pp_reg r)
+
     let mem_access_size = function
-      | I_NOP | I_JMP _ | I_JCC _ | I_LOCK _ | I_MFENCE -> None
+      | I_NOP | I_JMP _ | I_JCC _ | I_LOCK _ | I_FENCE _
+      | I_MOVNTDQA _ (* twice a quad in fact *)
+        -> None
       | I_EFF_OP (_, sz, _, _) | I_EFF (_, sz, _) | I_EFF_EFF (_, sz, _, _)
-        | I_CMPXCHG (sz, _, _) | I_CMOVC (sz, _, _) -> Some (inst_size_to_mach_size sz)
+      | I_CMPXCHG (sz, _, _) | I_CMOVC (sz, _, _)
+      | I_MOVNTI (sz,_,_)  | I_MOVD (sz,_,_)
+        -> Some (inst_size_to_mach_size sz)
+
 
     (********************)
     (* global locations *)
