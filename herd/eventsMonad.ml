@@ -773,7 +773,11 @@ and type evt_struct = E.event_structure) =
               E.mem_accesses = E.EventSet.singleton e_full;} in
           eiid+1,Evt.singleton ((),a_eqs@v_eqs,st)
 
-      let is_tagloc a = A.V.check_atag a
+      let is_tagloc a =
+        let open Constant in
+        match a with
+        | V.Val (System (TAG,_)) -> true
+        | _ -> false
 
       let add_inittags env =
         let glob,tag =
