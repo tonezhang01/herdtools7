@@ -99,7 +99,7 @@ module type S =
 
     val tooFar : string -> unit t
 
-        (* read_loc is_data mk_action loc ii:DGG
+        (* read_loc is_data mk_action loc ii
            for each value v that could be read,
            make an event structure comprising a single event with
            instruction id "ii", and action "mk_action v loc".
