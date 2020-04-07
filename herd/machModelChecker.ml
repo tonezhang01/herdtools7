@@ -174,6 +174,15 @@ module Make
         end in
       let unv = lazy begin E.EventRel.cartesian evts evts  end in
       let ks = { I.id; unv; evts; conc; po;} in
+      let si = lazy begin
+        if mixed then
+          E.EventRel.unions
+            (E.EventSetSet.map_list
+               (fun sm -> E.EventRel.cartesian sm sm)
+               conc.S.str.E.sca)
+        else
+          E.EventRel.set_to_rln (Lazy.force mem_evts)
+      end in
 (* Initial env *)
       let m =
         I.add_rels
@@ -195,10 +204,6 @@ module Make
                 E.EventRel.restrict_rel
                   (fun e1 e2 -> not (E.same_proc e1 e2)) (Lazy.force unv)
               end ;
-              "ext",lazy begin
-                E.EventRel.restrict_rel
-                  (fun e1 e2 -> not (E.same_proc e1 e2)) (Lazy.force unv)
-              end ;
               "rmw",lazy conc.S.atomic_load_store;
               "amo",lazy (Lazy.force pr).S.amo;
               "po", lazy  po;
@@ -209,15 +214,7 @@ module Make
               "success", lazy (Lazy.force pr).S.success;
               "rf", lazy (Lazy.force pr).S.rf;
               "control",lazy conc.S.str.E.control ;
-              "sm",lazy begin
-                if mixed then
-                  E.EventRel.unions
-                    (E.EventSetSet.map_list
-                       (fun sm -> E.EventRel.cartesian sm sm)
-                       conc.S.str.E.sca)
-                else
-                  E.EventRel.set_to_rln (Lazy.force mem_evts)
-              end;
+              "sm",si; "si",si;
               "iico_data", lazy conc.S.str.E.intra_causality_data;
               "iico_ctrl", lazy conc.S.str.E.intra_causality_control;
             ]) in
